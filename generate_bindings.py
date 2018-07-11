@@ -44,6 +44,8 @@ def jstype_to_haxe(jstype, void_allowed=False):
     elif "array." in jstype.lower():
         # Enlève le array.< et le >
         return "Array<" + jstype_to_haxe(jstype[7:-1]) + ">"
+    elif jstype == "RegExp":
+        return "EReg"
 
     elif jstype == "HTMLImageElement":
         return "js.html.ImageElement"
@@ -92,6 +94,8 @@ def jstype_to_haxe(jstype, void_allowed=False):
     elif "<" in jstype and ">" in jstype:
         return "Dynamic"
     elif jstype == "FrameRequestCallback":
+        return "Dynamic"
+    elif jstype == "GamepadHapticActuator":
         return "Dynamic"
     elif "." in jstype:
         if jstype in Class_.classes_index or jstype in TypeDef.typedef_indexes:
