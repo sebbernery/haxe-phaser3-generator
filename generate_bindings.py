@@ -47,6 +47,8 @@ def jstype_to_haxe(jstype, void_allowed=False):
     elif jstype == "RegExp":
         return "EReg"
 
+    elif jstype == "HTMLDivElement":
+        return "js.html.DivElement"
     elif jstype == "HTMLImageElement":
         return "js.html.ImageElement"
     elif jstype == "HTMLCanvasElement":
@@ -97,6 +99,11 @@ def jstype_to_haxe(jstype, void_allowed=False):
         return "Dynamic"
     elif jstype == "GamepadHapticActuator":
         return "Dynamic"
+
+    ## Hacks
+    if jstype == "ScaleManagerConfig":
+        return "Dynamic"
+
     elif "." in jstype:
         if jstype in Class_.classes_index or jstype in TypeDef.typedef_indexes:
             return longclsname_to_haxeclass(jstype)
@@ -108,6 +115,14 @@ def jstype_to_haxe(jstype, void_allowed=False):
 
     # print("blablabl", jstype)
     return jstype
+
+
+def good_name(name):
+    if name == "switch":
+        return "@:native('switch') ", "switch_"
+    elif name == "default":
+        return "@:native('default') ", "default_"
+    return "", name
 
 
 class Element:
@@ -145,9 +160,11 @@ class TypeDef(Element):
                 if "." in prop["name"]:
                     continue
 
+                prefix, name = good_name(prop["name"])
+
                 if "optional" in prop and prop["optional"]:
                     ret += "    @:optional "
-                ret += "var " + prop["name"] + ":"
+                ret += prefix + "var " + name + ":"
 
                 type_ = "Dynamic"
                 if len(prop["type"]["names"]) > 1:
@@ -156,7 +173,7 @@ class TypeDef(Element):
                     type_ = jstype_to_haxe(prop["type"]["names"][0])
 
                 # HACKS
-                if self.name == "GameConfig" and prop["name"] == "type":
+                if self.name == "GameConfig" and name == "type":
                     type_ = "Int"
 
                 ret += type_ + ";\n"
@@ -284,12 +301,6 @@ class Member(Element):
     def __repr__(self):
         return self.name
 
-    def good_name(self):
-        if self.name == "switch":
-            return "@:native('switch') ", "switch_"
-        return "", self.name
-
-
 
 class Attribute(Member):
     def __init__(self, element):
@@ -306,7 +317,7 @@ class Attribute(Member):
                 # print("KIKOO", self.element)
 
     def gen_haxe(self):
-        prefix, name = self.good_name()
+        prefix, name = good_name(self.name)
         type_ = jstype_to_haxe(self.type_)
 
         # Hacks
@@ -335,6 +346,8 @@ class Function(Member):
             return
 
         for param in self.element["params"]:
+            if "name" not in param:
+                continue
             if "." in param["name"]:
                 continue
             if "type" in param:
@@ -369,7 +382,7 @@ class Function(Member):
         return prefix + param.name + ":" + jstype_to_haxe(param.type)
 
     def gen_haxe(self):
-        prefix, name = self.good_name()
+        prefix, name = good_name(self.name)
 
         if self.returns == "this":
             #TODO: retourne le type de la classe
@@ -401,7 +414,7 @@ class Namespace(Element):
 
         # Hack
         if self.name == "Phaser":
-            ret = ""
+            ret = ''
 
         ret += "class " + self.name + "{\n"
         for member in self.members:
