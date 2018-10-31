@@ -59,6 +59,8 @@ def jstype_to_haxe(jstype, void_allowed=False):
         return "js.html.CanvasRenderingContext2D"
     elif jstype == "Image":
         return "js.html.Image"
+    elif jstype == "ImageData":
+        return "js.html.ImageData"
     elif jstype == "WebGLTexture":
         return "js.html.webgl.Texture"
     elif jstype == "WebGLRenderingContext":
