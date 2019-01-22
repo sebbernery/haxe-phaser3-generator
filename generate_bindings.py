@@ -127,10 +127,25 @@ def good_name(name):
     return "", name
 
 
+def format_comment(comment, indent=1):
+    if comment == "":
+        return ""
+
+    comment_lines = comment.split("\n")
+    ret_comment = comment_lines[0] + "\n"
+    for line in comment_lines[1:]:
+        line = line.strip()
+        ret_comment += " "*4*indent + " " + line + "\n"
+
+    ret_comment += " "*4*indent
+    return ret_comment
+
+
 class Element:
     def __init__(self, element):
         self.name = element["name"]
         self.name = self.name.replace(";", "")
+        self.comment = element["comment"]
         self.element = element
 
 
@@ -148,7 +163,11 @@ class TypeDef(Element):
         return self.name + ": " + self.type_
 
     def gen_haxe(self):
-        ret = "typedef " + self.name + " = "
+        ret = ""
+        if self.comment != "":
+            ret = format_comment(self.comment, 0)
+
+        ret += "typedef " + self.name + " = "
 
         if self.type_ == "object":
             if len(self.element["properties"]) == 0:
@@ -244,7 +263,11 @@ class Class_(Element):
         return all_members
 
     def gen_haxe(self):
-        ret = '@:native("' + self.longname + '")\n'
+        ret = ""
+        if self.comment != "":
+            ret = format_comment(self.comment, 0)
+
+        ret += '@:native("' + self.longname + '")\n'
         ret += "extern class " + self.name
         if self.extends is not None and jstype_to_haxe(self.extends) != "Dynamic":
             ret += " extends " + jstype_to_haxe(self.extends)
@@ -318,7 +341,7 @@ class Attribute(Member):
                 self.type_ = "Dynamic" # TODO: EITHERTYPE
                 # print("KIKOO", self.element)
 
-    def gen_haxe(self):
+    def gen_haxe(self, comment=True):
         prefix, name = good_name(self.name)
         type_ = jstype_to_haxe(self.type_)
 
@@ -327,7 +350,13 @@ class Attribute(Member):
             if self.name == "objects":
                 type_ = "Array<Dynamic>"
 
-        return prefix + "public var " + name + ":" + type_
+        ret = ""
+        if comment and self.comment != "":
+            ret = format_comment(self.comment, 1)
+
+        ret += prefix + "public var " + name + ":" + type_
+
+        return ret
 
 
 class Function(Member):
@@ -392,7 +421,12 @@ class Function(Member):
         else:
             return_type = jstype_to_haxe(self.returns)
 
-        return prefix + "public function " + name + self.gen_parenthesis() + ":" + return_type
+        ret = ""
+        if self.comment != "":
+            ret = format_comment(self.comment, 1)
+        ret += prefix + "public function " + name + self.gen_parenthesis() + ":" + return_type
+
+        return ret
 
 
 class Namespace(Element):
@@ -412,15 +446,24 @@ class Namespace(Element):
         self.members.append(member)
 
     def gen_haxe(self):
-        ret = '@:native("' + self.longname + '")\n'
+        ret = ""
+        if self.comment != "":
+            ret = format_comment(self.comment, 0)
+
+        ret += '@:native("' + self.longname + '")\n'
 
         # Hack
         if self.name == "Phaser":
             ret = ''
 
-        ret += "class " + self.name + "{\n"
+        ret += "class " + self.name + " {\n"
         for member in self.members:
-            ret += "    static " + member.gen_haxe() + ";\n"
+            if member.comment != "":
+                ret += "    " + format_comment(member.comment)
+                ret += "static " + member.gen_haxe(comment=False) + ";\n"
+            else:
+                ret += "    static " + member.gen_haxe(comment=False) + ";\n"
+
         ret += "}\n"
         return ret
 
