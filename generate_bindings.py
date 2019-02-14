@@ -124,6 +124,8 @@ def good_name(name):
         return "@:native('switch') ", "switch_"
     elif name == "default":
         return "@:native('default') ", "default_"
+    elif name == "extern":
+        return "@:native('default') ", "extern_"
     return "", name
 
 

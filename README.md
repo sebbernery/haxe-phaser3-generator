@@ -1,6 +1,6 @@
 # Haxe bindings generator for Phaser 3
 
-This Python script generates Haxe bindings for Phaser 3.X. Please note that bindings generated contains errors.
+This Python script generates Haxe bindings for Phaser 3.X. Please note that bindings generated can contains errors.
 It's highly recommanded to understand how bindings works to use that. If you have a compilation error (function call mismatch for example), check if it's not a bad definition in the bindings.
 
 The script contains multiple hacks for very specific situations. There is probably other issues.
