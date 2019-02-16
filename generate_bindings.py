@@ -523,6 +523,8 @@ def main(jsdoc_json_path, output_path):
                     continue
 
                 if element["longname"] not in Class_.classes_index and "type" not in element:
+                    if "undocumented" in element and element["undocumented"]:
+                        continue
                     classes.append(Class_(element))
                     continue
 
