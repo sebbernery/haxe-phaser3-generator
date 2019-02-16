@@ -175,6 +175,7 @@ class TypeDef(Element):
         return self.name + ": " + self.type_
 
     def parse_properties(self):
+        self.properties = []
         if "properties" not in self.element:
             return
 
