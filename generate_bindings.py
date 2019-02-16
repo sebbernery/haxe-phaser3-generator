@@ -155,6 +155,9 @@ class Element:
         self.element = element
 
 
+TypeDefProperty = namedtuple("TypeDefProperty", ["prefix", "name", "optional", "type_"])
+
+
 class TypeDef(Element):
     typedef_indexes = {}
 
@@ -163,13 +166,72 @@ class TypeDef(Element):
         self.name = format_class_name(self.name)
         self.type_ = element["type"]["names"][0].lower()
 
+        self.properties = []
+
         self.longname = format_class_name(element["longname"])
         TypeDef.typedef_indexes[self.longname] = self
 
     def __repr__(self):
         return self.name + ": " + self.type_
 
+    def parse_properties(self):
+        if "properties" not in self.element:
+            return
+
+        for prop in self.element["properties"]:
+            if len(prop) == 0:
+                continue
+            if "." in prop["name"]:
+                continue
+
+            prefix, name = good_name(prop["name"])
+            optional = False
+            if "optional" in prop and prop["optional"]:
+                optional = True
+
+            type_ = "Dynamic"
+            if len(prop["type"]["names"]) > 1:
+                type_ = "Dynamic" # TODO EITHERTYPE
+            else:
+                type_ = jstype_to_haxe(prop["type"]["names"][0])
+
+            # HACKS
+            if self.name == "GameConfig" and name == "type":
+                type_ = "Int"
+
+            self.properties.append(TypeDefProperty(
+                prefix=prefix,
+                name=name,
+                optional=optional,
+                type_=type_
+            ))
+
+    def get_properties(self):
+        doubles = set()
+        self.parse_properties()
+        properties = self.properties
+
+        if "augments" not in self.element:
+            return properties
+
+        for prop in properties:
+            doubles.add(prop.name)
+
+        for augment in self.element["augments"]:
+            typedef = TypeDef.typedef_indexes[augment]
+            typedef_props = typedef.get_properties()
+
+            for prop in typedef_props:
+                if prop.name not in doubles:
+                    doubles.add(prop.name)
+                    properties.append(prop)
+
+        return properties
+
+
     def gen_haxe(self):
+        properties = self.get_properties()
+
         ret = ""
         if self.comment != "":
             ret = format_comment(self.comment, 0)
@@ -182,29 +244,11 @@ class TypeDef(Element):
                 return
 
             ret += "{\n"
-            for prop in self.element["properties"]:
-                if len(prop) == 0:
-                    continue
-                if "." in prop["name"]:
-                    continue
-
-                prefix, name = good_name(prop["name"])
-
-                if "optional" in prop and prop["optional"]:
+            for prop in properties:
+                if prop.optional:
                     ret += "    @:optional "
-                ret += prefix + "var " + name + ":"
-
-                type_ = "Dynamic"
-                if len(prop["type"]["names"]) > 1:
-                    type_ = "Dynamic" # TODO EITHERTYPE
-                else:
-                    type_ = jstype_to_haxe(prop["type"]["names"][0])
-
-                # HACKS
-                if self.name == "GameConfig" and name == "type":
-                    type_ = "Int"
-
-                ret += type_ + ";\n"
+                ret += prop.prefix + "var " + prop.name + ":"
+                ret += prop.type_ + ";\n"
             ret += "}"
 
         elif self.type_ == "function":
@@ -238,10 +282,12 @@ class Class_(Element):
         self.members.append(member)
 
     def parse_augments(self):
-        if "augments" in self.element:
-            self.extends = self.element["augments"][0]
-            if len(self.element["augments"]) > 1:
-                self.augments = self.element["augments"][1:]
+        if "augments" not in self.element:
+            return
+
+        self.extends = self.element["augments"][0]
+        if len(self.element["augments"]) > 1:
+            self.augments = self.element["augments"][1:]
 
     def get_all_members(self):
         all_members = copy.copy(self.members)
