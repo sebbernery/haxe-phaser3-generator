@@ -143,6 +143,10 @@ def format_comment(comment, indent=1):
     return ret_comment
 
 
+def format_class_name(name):
+    return name.split("<")[0]
+
+
 class Element:
     def __init__(self, element):
         self.name = element["name"]
@@ -156,9 +160,10 @@ class TypeDef(Element):
 
     def __init__(self, element):
         super().__init__(element)
+        self.name = format_class_name(self.name)
         self.type_ = element["type"]["names"][0].lower()
 
-        self.longname = element["longname"]
+        self.longname = format_class_name(element["longname"])
         TypeDef.typedef_indexes[self.longname] = self
 
     def __repr__(self):
@@ -216,7 +221,8 @@ class Class_(Element):
 
     def __init__(self, element):
         super().__init__(element)
-        self.longname = element["longname"]
+        self.name = format_class_name(self.name)
+        self.longname = format_class_name(element["longname"])
         Class_.classes_index[self.longname] = self
         self.members = []
         self.members_names = set()
