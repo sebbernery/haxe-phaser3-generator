@@ -47,6 +47,10 @@ def jstype_to_haxe(jstype, void_allowed=False):
     elif jstype == "RegExp":
         return "EReg"
 
+    elif jstype == "Element":
+        return "js.html.Element"
+    elif jstype == "HTMLElement":
+        return "js.html.HtmlElement"
     elif jstype == "HTMLDivElement":
         return "js.html.DivElement"
     elif jstype == "HTMLImageElement":
@@ -93,6 +97,10 @@ def jstype_to_haxe(jstype, void_allowed=False):
         return "js.html.CSSStyleRule"
     elif jstype == "ArrayBuffer":
         return "js.html.ArrayBuffer"
+    elif jstype == "AudioContext":
+        return "js.html.audio.AudioContext"
+    elif jstype == "GLenum":
+        return "Dynamic"
     elif jstype.endswith("Array"):
         return "js.html." + jstype
     elif "<" in jstype and ">" in jstype:
@@ -269,6 +277,7 @@ class Class_(Element):
         self.name = format_class_name(self.name)
         self.longname = format_class_name(element["longname"])
         Class_.classes_index[self.longname] = self
+        print(self.longname)
         self.members = []
         self.members_names = set()
         self.extends = None
@@ -549,7 +558,7 @@ def main(jsdoc_json_path, output_path):
         if element["kind"] == "typedef":
             typedefs.append(TypeDef(element))
 
-        elif element["kind"] == "class":
+        elif element["kind"] == "class" or (element["kind"] == "namespace" and "Component" in element["longname"]):
             if element["longname"] in Class_.classes_index:
                 # Class_.classes_index.merge(element)
                 ...
@@ -587,7 +596,6 @@ def main(jsdoc_json_path, output_path):
 
         elif element["kind"] == "namespace":
             namespaces.append(Namespace(element))
-
 
     all_errors_membersof = []
 
