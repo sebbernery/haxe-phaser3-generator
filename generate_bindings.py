@@ -102,13 +102,13 @@ def jstype_to_haxe(jstype, void_allowed=False):
     elif jstype == "CSSStyleRule":
         return "js.html.CSSStyleRule"
     elif jstype == "ArrayBuffer":
-        return "js.html.ArrayBuffer"
+        return "js.lib.ArrayBuffer"
     elif jstype == "AudioContext":
         return "js.html.audio.AudioContext"
     elif jstype == "GLenum":
         return "Dynamic"
     elif jstype.endswith("Array"):
-        return "js.html." + jstype
+        return "js.lib." + jstype
     elif "<" in jstype and ">" in jstype:
         return "Dynamic"
     elif jstype == "FrameRequestCallback":
@@ -127,7 +127,6 @@ def jstype_to_haxe(jstype, void_allowed=False):
             # splited_type = jstype.split(".")
             # return ".".join([n.lower() for n in splited_type[:-2]]) + "." + ".".join(splited_type[-2:])
             return "Dynamic"
-
 
     # print("blablabl", jstype)
     return jstype
