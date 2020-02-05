@@ -65,6 +65,8 @@ def jstype_to_haxe(jstype, void_allowed=False):
         return "js.html.Image"
     elif jstype == "ImageData":
         return "js.html.ImageData"
+    elif jstype == "HTMLVideoElement":
+        return "js.html.VideoElement"
     elif jstype == "WebGLTexture":
         return "js.html.webgl.Texture"
     elif jstype == "WebGLRenderingContext":
@@ -133,7 +135,9 @@ def good_name(name):
     elif name == "default":
         return "@:native('default') ", "default_"
     elif name == "extern":
-        return "@:native('default') ", "extern_"
+        return "@:native('extern') ", "extern_"
+    elif name == "override":
+        return "@:native('override') ", "override_"
     return "", name
 
 
@@ -277,7 +281,6 @@ class Class_(Element):
         self.name = format_class_name(self.name)
         self.longname = format_class_name(element["longname"])
         Class_.classes_index[self.longname] = self
-        print(self.longname)
         self.members = []
         self.members_names = set()
         self.extends = None
@@ -488,7 +491,12 @@ class Function(Member):
         ret = ""
         if self.comment != "":
             ret = format_comment(self.comment, 1)
-        ret += prefix + "public function " + name + self.gen_parenthesis() + ":" + return_type
+        ret += prefix
+
+        if "scope" in self.element and self.element["scope"] == "static":
+            ret += "static "
+
+        ret += "public function " + name + self.gen_parenthesis() + ":" + return_type
 
         return ret
 
@@ -558,7 +566,7 @@ def main(jsdoc_json_path, output_path):
         if element["kind"] == "typedef":
             typedefs.append(TypeDef(element))
 
-        elif element["kind"] == "class" or (element["kind"] == "namespace" and "Component" in element["longname"]):
+        elif element["kind"] == "class" or (element["kind"] == "namespace" and ("Component" in element["longname"] or "Color" in element["longname"])):
             if element["longname"] in Class_.classes_index:
                 # Class_.classes_index.merge(element)
                 ...
@@ -615,11 +623,12 @@ def main(jsdoc_json_path, output_path):
         try:
             Class_.classes_index[member.memberof].add_member(member)
         except Exception as e:
+            # print("bug", e)
             all_errors_membersof.append(member.element)
 
 
-# import pprint
-# pprint.pprint(all_errors_membersof)
+    # import pprint
+    # pprint.pprint(all_errors_membersof)
 
     ## Write code
 
