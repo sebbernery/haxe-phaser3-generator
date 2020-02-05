@@ -22,7 +22,7 @@ def longclsname_to_haxeclass(jstype):
 
 
 def jstype_to_haxe(jstype, void_allowed=False):
-    if jstype.lower() in ["object", "*", "dynamic", "any"]:
+    if jstype.lower() in ["object", "*", "dynamic", "any", "function()"]:
         return "Dynamic"
     elif jstype.lower() in ["null"]:
         if void_allowed:
@@ -30,6 +30,8 @@ def jstype_to_haxe(jstype, void_allowed=False):
         else:
             return "Dynamic"
     elif jstype.lower() in ["string"]:
+        return "String"
+    elif jstype == "(string|symbol)":
         return "String"
     elif jstype.lower() in ["float", "number"]:
         return "Float"
@@ -49,6 +51,8 @@ def jstype_to_haxe(jstype, void_allowed=False):
 
     elif jstype == "Element":
         return "js.html.Element"
+    elif jstype == "XMLDocument":
+        return "js.html.XMLDocument"
     elif jstype == "HTMLElement":
         return "js.html.HtmlElement"
     elif jstype == "HTMLDivElement":
