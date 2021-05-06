@@ -81,6 +81,12 @@ def jstype_to_haxe(jstype, void_allowed=False):
         return "js.html.webgl.Program"
     elif jstype == "WebGLFramebuffer":
         return "js.html.webgl.Framebuffer"
+    elif jstype == "WebGLUniformLocation":
+        return "js.html.webgl.UniformLocation"
+    elif jstype == "ANGLE_instanced_arrays":
+        return "js.html.webgl.extension.ANGLEInstancedArrays"
+    elif jstype == "OES_vertex_array_object":
+        return "js.html.webgl.extension.OESVertexArrayObject"
     elif jstype == "XMLHttpRequestResponseType":
         return "js.html.XMLHttpRequestResponseType"
     elif jstype == "XMLHttpRequest":
@@ -141,6 +147,8 @@ def good_name(name):
         return "@:native('extern') ", "extern_"
     elif name == "override":
         return "@:native('override') ", "override_"
+    elif name == "enum":
+        return "@:native('enum') ", "enum_"
     return "", name
 
 
@@ -234,6 +242,9 @@ class TypeDef(Element):
             doubles.add(prop.name)
 
         for augment in self.element["augments"]:
+            if augment not in TypeDef.typedef_indexes:
+                print("WARNING: augment not found : ", augment)
+                continue
             typedef = TypeDef.typedef_indexes[augment]
             typedef_props = typedef.get_properties()
 
@@ -261,9 +272,12 @@ class TypeDef(Element):
 
             ret += "{\n"
             for prop in properties:
+                prop_name = prop.name
+                if prop_name.isdigit():
+                    prop_name = "_" + prop_name
                 if prop.optional:
                     ret += "    @:optional "
-                ret += prop.prefix + "var " + prop.name + ":"
+                ret += prop.prefix + "var " + prop_name + ":"
                 ret += prop.type_ + ";\n"
             ret += "}"
 
